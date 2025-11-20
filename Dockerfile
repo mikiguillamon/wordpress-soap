@@ -30,3 +30,11 @@ RUN { \
       echo 'post_max_size = 64M'; \
       echo 'upload_max_filesize = 64M'; \
     } > /usr/local/etc/php/conf.d/custom-resources.ini
+
+RUN { \
+      echo 'pm = dynamic'; \
+      echo 'pm.max_children = 12'; \
+      echo 'pm.start_servers = 4'; \
+      echo 'pm.min_spare_servers = 4'; \
+      echo 'pm.max_spare_servers = 8'; \
+    } > /usr/local/etc/php-fpm.d/z-custom-fpm.conf
