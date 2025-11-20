@@ -22,3 +22,11 @@ RUN { \
       echo 'opcache.revalidate_freq=0'; \
       echo 'opcache.validate_timestamps=0'; \
     } > /usr/local/etc/php/conf.d/opcache.ini
+
+# Aumentar memoria y otros límites de PHP
+RUN { \
+      echo 'memory_limit = 1024M'; \
+      echo 'max_execution_time = 120'; \
+      echo 'post_max_size = 64M'; \
+      echo 'upload_max_filesize = 64M'; \
+    } > /usr/local/etc/php/conf.d/custom-resources.ini
