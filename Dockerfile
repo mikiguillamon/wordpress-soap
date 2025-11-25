@@ -31,10 +31,9 @@ RUN { \
       echo 'upload_max_filesize = 64M'; \
     } > /usr/local/etc/php/conf.d/custom-resources.ini
 
-RUN { \
-      echo 'pm = dynamic'; \
-      echo 'pm.max_children = 12'; \
-      echo 'pm.start_servers = 4'; \
-      echo 'pm.min_spare_servers = 4'; \
-      echo 'pm.max_spare_servers = 8'; \
-    } > /usr/local/etc/php-fpm.d/z-custom-fpm.conf
+RUN mkdir -p /usr/local/etc/php-fpm.d \
+ && echo 'pm = dynamic' > /usr/local/etc/php-fpm.d/z-custom-fpm.conf \
+ && echo 'pm.max_children = 12' >> /usr/local/etc/php-fpm.d/z-custom-fpm.conf \
+ && echo 'pm.start_servers = 4' >> /usr/local/etc/php-fpm.d/z-custom-fpm.conf \
+ && echo 'pm.min_spare_servers = 4' >> /usr/local/etc/php-fpm.d/z-custom-fpm.conf \
+ && echo 'pm.max_spare_servers = 8' >> /usr/local/etc/php-fpm.d/z-custom-fpm.conf
