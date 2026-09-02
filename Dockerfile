@@ -37,3 +37,6 @@ RUN mkdir -p /usr/local/etc/php-fpm.d \
  && echo 'pm.start_servers = 4' >> /usr/local/etc/php-fpm.d/z-custom-fpm.conf \
  && echo 'pm.min_spare_servers = 4' >> /usr/local/etc/php-fpm.d/z-custom-fpm.conf \
  && echo 'pm.max_spare_servers = 8' >> /usr/local/etc/php-fpm.d/z-custom-fpm.conf
+
+ # Limitar concurrencia de Apache para evitar agotar la RAM del servidor
+RUN sed -ri 's/^[[:space:]]*MaxRequestWorkers[[:space:]]+[0-9]+/MaxRequestWorkers       40/' /etc/apache2/mods-available/mpm_prefork.conf
