@@ -5,24 +5,33 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+
     volumes:
       - wordpress-files:/var/www/html
+
     environment:
       SERVICE_URL_WORDPRESS: ${SERVICE_URL_WORDPRESS}
+
       WORDPRESS_DB_HOST: mariadb
       WORDPRESS_DB_USER: ${SERVICE_USER_WORDPRESS}
       WORDPRESS_DB_PASSWORD: ${SERVICE_PASSWORD_WORDPRESS}
       WORDPRESS_DB_NAME: wordpress
+
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_REDIS_HOST', 'redis');
         define('WP_REDIS_PORT', 6379);
         define('WP_CACHE_KEY_SALT', 'tudominio.com');
         define('WP_CACHE', true);
+
         define('WP_MEMORY_LIMIT', '512M');
         define('WP_MAX_MEMORY_LIMIT', '512M');
+
     depends_on:
-      - mariadb
-      - redis
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
     healthcheck:
       test:
         - CMD
@@ -34,17 +43,22 @@ services:
       retries: 3
       start_period: 30s
 
+
   mariadb:
     image: mariadb:11
+
     ports:
       - "3306:3306"
+
     volumes:
       - mariadb-data:/var/lib/mysql
+
     environment:
       MYSQL_ROOT_PASSWORD: ${SERVICE_PASSWORD_ROOT}
       MYSQL_DATABASE: wordpress
       MYSQL_USER: ${SERVICE_USER_WORDPRESS}
       MYSQL_PASSWORD: ${SERVICE_PASSWORD_WORDPRESS}
+
     healthcheck:
       test:
         - CMD
@@ -55,12 +69,31 @@ services:
       timeout: 20s
       retries: 10
 
+
   redis:
     image: redis:7
-    volumes:
-      - redis-data:/data
+
+    command:
+      - redis-server
+      - --maxmemory
+      - 768mb
+      - --maxmemory-policy
+      - allkeys-lfu
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 
 volumes:
   wordpress-files:
   mariadb-data:
-  redis-data:
