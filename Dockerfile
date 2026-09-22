@@ -23,7 +23,7 @@ RUN { \
       echo 'opcache.validate_timestamps=0'; \
     } > /usr/local/etc/php/conf.d/opcache.ini
 
-# Recursos PHP
+# Límites PHP
 RUN { \
       echo 'memory_limit = 512M'; \
       echo 'max_execution_time = 120'; \
@@ -49,7 +49,7 @@ RUN sed -ri \
       's/^[[:space:]]*MaxConnectionsPerChild[[:space:]]+[0-9]+/MaxConnectionsPerChild 300/' \
       /etc/apache2/mods-available/mpm_prefork.conf
 
-# Ajustes HTTP de Apache
+# HTTP / KeepAlive
 RUN { \
       echo 'Timeout 120'; \
       echo 'KeepAlive On'; \
