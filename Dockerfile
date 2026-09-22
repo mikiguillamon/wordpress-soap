@@ -6,14 +6,14 @@ RUN apt-get update && \
     docker-php-ext-install soap && \
     rm -rf /var/lib/apt/lists/*
 
-# OPcache para acelerar PHP
+# OPcache
 RUN docker-php-ext-install opcache
 
-# Extensión Redis para PHP
+# Redis para PHP
 RUN pecl install redis && \
     docker-php-ext-enable redis
 
-# Configuración básica de OPcache para producción
+# OPcache para producción
 RUN { \
       echo 'opcache.enable=1'; \
       echo 'opcache.memory_consumption=256'; \
@@ -23,23 +23,37 @@ RUN { \
       echo 'opcache.validate_timestamps=0'; \
     } > /usr/local/etc/php/conf.d/opcache.ini
 
-# Aumentar memoria y otros límites de PHP
+# Recursos PHP
 RUN { \
-      echo 'memory_limit = 1024M'; \
+      echo 'memory_limit = 512M'; \
       echo 'max_execution_time = 120'; \
+      echo 'max_input_time = 120'; \
       echo 'post_max_size = 64M'; \
       echo 'upload_max_filesize = 64M'; \
     } > /usr/local/etc/php/conf.d/custom-resources.ini
 
-RUN mkdir -p /usr/local/etc/php-fpm.d \
- && echo 'pm = dynamic' > /usr/local/etc/php-fpm.d/z-custom-fpm.conf \
- && echo 'pm.max_children = 12' >> /usr/local/etc/php-fpm.d/z-custom-fpm.conf \
- && echo 'pm.start_servers = 4' >> /usr/local/etc/php-fpm.d/z-custom-fpm.conf \
- && echo 'pm.min_spare_servers = 4' >> /usr/local/etc/php-fpm.d/z-custom-fpm.conf \
- && echo 'pm.max_spare_servers = 8' >> /usr/local/etc/php-fpm.d/z-custom-fpm.conf
+# Apache prefork
+RUN sed -ri \
+      's/^[[:space:]]*StartServers[[:space:]]+[0-9]+/StartServers             4/' \
+      /etc/apache2/mods-available/mpm_prefork.conf && \
+    sed -ri \
+      's/^[[:space:]]*MinSpareServers[[:space:]]+[0-9]+/MinSpareServers          4/' \
+      /etc/apache2/mods-available/mpm_prefork.conf && \
+    sed -ri \
+      's/^[[:space:]]*MaxSpareServers[[:space:]]+[0-9]+/MaxSpareServers          8/' \
+      /etc/apache2/mods-available/mpm_prefork.conf && \
+    sed -ri \
+      's/^[[:space:]]*MaxRequestWorkers[[:space:]]+[0-9]+/MaxRequestWorkers      16/' \
+      /etc/apache2/mods-available/mpm_prefork.conf && \
+    sed -ri \
+      's/^[[:space:]]*MaxConnectionsPerChild[[:space:]]+[0-9]+/MaxConnectionsPerChild 300/' \
+      /etc/apache2/mods-available/mpm_prefork.conf
 
-# Limitar concurrencia de Apache para evitar agotar la RAM del servidor
-RUN sed -ri 's/^[[:space:]]*MaxRequestWorkers[[:space:]]+[0-9]+/MaxRequestWorkers       40/' /etc/apache2/mods-available/mpm_prefork.conf
-
-# Reciclar workers de Apache para evitar crecimiento progresivo de memoria
-RUN sed -ri 's/^[[:space:]]*MaxConnectionsPerChild[[:space:]]+[0-9]+/MaxConnectionsPerChild  500/' /etc/apache2/mods-available/mpm_prefork.conf
+# Ajustes HTTP de Apache
+RUN { \
+      echo 'Timeout 120'; \
+      echo 'KeepAlive On'; \
+      echo 'MaxKeepAliveRequests 100'; \
+      echo 'KeepAliveTimeout 2'; \
+    } > /etc/apache2/conf-available/jff-performance.conf && \
+    a2enconf jff-performance
